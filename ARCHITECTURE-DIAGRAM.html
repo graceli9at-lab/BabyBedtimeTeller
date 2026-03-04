@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BabyBedtimeTeller — Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy:      #080D20;
+  --navy-mid:  #0F1635;
+  --navy-card: rgba(15,22,53,0.75);
+  --gold:      #FFD166;
+  --gold-dim:  rgba(255,209,102,0.25);
+  --cream:     #EAD9C0;
+  --cream-dim: rgba(234,217,192,0.5);
+  --border:    rgba(255,209,102,0.16);
+  --green:     #6EE7B7;
+  --red:       #FCA5A5;
+  --blue:      #93C5FD;
+  --purple:    #C4B5FD;
+  --r:         12px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--navy);
+  color: var(--cream);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  line-height: 1.7;
+  padding: 0 0 6rem;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Starfield ─────────────────────────── */
+canvas#stars {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+
+/* ── Page wrapper ──────────────────────── */
+.page { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+
+/* ── Hero header ───────────────────────── */
+.hero {
+  text-align: center;
+  padding: 4.5rem 0 3.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4rem;
+}
+.hero .eyebrow {
+  font-size: 0.65rem; font-weight: 500; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--gold); opacity: 0.7; margin-bottom: 1rem;
+}
+.hero h1 {
+  font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 300; color: #fff; letter-spacing: 0.02em; margin-bottom: 0.6rem;
+}
+.hero h1 em { font-style: italic; color: var(--gold); }
+.hero p { font-size: 0.9rem; color: var(--cream-dim); letter-spacing: 0.03em; }
+
+/* ── Section ───────────────────────────── */
+.section { margin-bottom: 4.5rem; }
+.section-label {
+  font-size: 0.62rem; font-weight: 600; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--gold); opacity: 0.65; margin-bottom: 0.6rem;
+}
+.section-title {
+  font-family: 'Cormorant Garamond', serif; font-size: 1.7rem;
+  font-weight: 300; color: #fff; margin-bottom: 1.8rem;
+}
+
+/* ── Architecture SVG card ─────────────── */
+.diagram-card {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 2.5rem;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+}
+
+.arch-svg { width: 100%; height: auto; overflow: visible; }
+
+/* SVG component boxes */
+.comp-box { rx: 10; ry: 10; }
+
+/* ── Data flow steps ───────────────────── */
+.flow-steps { display: flex; flex-direction: column; gap: 0; }
+
+.flow-step {
+  display: flex; gap: 1.5rem; align-items: flex-start;
+  padding: 1.4rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  position: relative;
+}
+.flow-step:last-child { border-bottom: none; }
+
+.step-num {
+  flex-shrink: 0;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--gold-dim); border: 1px solid rgba(255,209,102,0.4);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-size: 0.95rem;
+  color: var(--gold); font-weight: 600; margin-top: 2px;
+}
+
+.step-body { flex: 1; }
+.step-title { font-weight: 500; color: #fff; margin-bottom: 0.25rem; font-size: 0.95rem; }
+.step-desc { font-size: 0.85rem; color: var(--cream-dim); line-height: 1.6; }
+.step-tag {
+  display: inline-block; margin-top: 0.4rem; padding: 0.15rem 0.55rem;
+  border-radius: 20px; font-size: 0.65rem; font-weight: 500; letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.tag-green  { background: rgba(110,231,183,0.12); color: var(--green); border: 1px solid rgba(110,231,183,0.25); }
+.tag-blue   { background: rgba(147,197,253,0.12); color: var(--blue);  border: 1px solid rgba(147,197,253,0.25); }
+.tag-gold   { background: rgba(255,209,102,0.12); color: var(--gold);  border: 1px solid rgba(255,209,102,0.25); }
+.tag-purple { background: rgba(196,181,253,0.12); color: var(--purple);border: 1px solid rgba(196,181,253,0.25); }
+
+/* ── Tradeoffs grid ────────────────────── */
+.tradeoffs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 640px) { .tradeoffs-grid { grid-template-columns: 1fr; } }
+
+.tradeoff-card {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.5rem;
+  backdrop-filter: blur(8px);
+}
+.tradeoff-card h3 {
+  font-family: 'Cormorant Garamond', serif; font-size: 1.05rem;
+  color: var(--gold); margin-bottom: 0.9rem; font-weight: 400;
+}
+.tradeoff-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; align-items: flex-start; }
+.tradeoff-row .icon { font-size: 0.8rem; margin-top: 3px; flex-shrink: 0; }
+.tradeoff-row p { font-size: 0.82rem; color: var(--cream-dim); line-height: 1.5; }
+.chosen {
+  margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 0.75rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--green); opacity: 0.85;
+}
+
+/* ── Insights ──────────────────────────── */
+.insights-list { display: flex; flex-direction: column; gap: 1rem; }
+.insight {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--r) var(--r) 0;
+  padding: 1.2rem 1.5rem;
+  backdrop-filter: blur(8px);
+}
+.insight h3 { font-size: 0.92rem; font-weight: 500; color: #fff; margin-bottom: 0.35rem; }
+.insight p  { font-size: 0.83rem; color: var(--cream-dim); line-height: 1.6; }
+.insight code {
+  font-family: 'DM Mono', monospace; font-size: 0.78rem;
+  background: rgba(255,255,255,0.07); padding: 0.1rem 0.4rem; border-radius: 4px;
+  color: var(--blue);
+}
+
+/* ── Risk register ─────────────────────── */
+.risk-table { width: 100%; border-collapse: collapse; }
+.risk-table th {
+  text-align: left; padding: 0.75rem 1rem;
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--gold); opacity: 0.7;
+  border-bottom: 1px solid var(--border);
+}
+.risk-table td {
+  padding: 1rem 1rem; font-size: 0.83rem; color: var(--cream-dim);
+  border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top;
+}
+.risk-table tr:last-child td { border-bottom: none; }
+.risk-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.risk-name { font-weight: 500; color: var(--cream); margin-bottom: 0.2rem; font-size: 0.87rem; }
+
+.badge {
+  display: inline-block; padding: 0.15rem 0.5rem; border-radius: 20px;
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.badge-high   { background: rgba(252,165,165,0.15); color: var(--red);   border: 1px solid rgba(252,165,165,0.3); }
+.badge-med    { background: rgba(255,209,102,0.12); color: var(--gold);  border: 1px solid rgba(255,209,102,0.3); }
+.badge-low    { background: rgba(110,231,183,0.12); color: var(--green); border: 1px solid rgba(110,231,183,0.3); }
+
+.risk-wrap {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+/* ── Divider ───────────────────────────── */
+.divider { text-align: center; color: var(--gold-dim); letter-spacing: 0.5em; font-size: 0.7rem; margin: 3rem 0; }
+
+/* ── Metric strip ──────────────────────── */
+.metrics-strip { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.metric-box {
+  flex: 1; min-width: 140px;
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.2rem 1.4rem;
+  text-align: center;
+}
+.metric-val {
+  font-family: 'Cormorant Garamond', serif; font-size: 2rem;
+  font-weight: 300; color: var(--gold); line-height: 1;
+}
+.metric-label { font-size: 0.72rem; color: var(--cream-dim); margin-top: 0.35rem; letter-spacing: 0.05em; }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<div class="page">
+
+  <!-- ── HERO ── -->
+  <div class="hero">
+    <div class="eyebrow">✦ &nbsp; System Design Document &nbsp; ✦</div>
+    <h1>Baby<em>Bedtime</em>Teller<br>Architecture</h1>
+    <p>Tradeoffs · Data Flow · Technical Insights · Risk Register</p>
+  </div>
+
+  <!-- ── KEY METRICS ── -->
+  <div class="section">
+    <div class="section-label">Success Metrics</div>
+    <div class="section-title">What we're optimizing for</div>
+    <div class="metrics-strip">
+      <div class="metric-box">
+        <div class="metric-val">&lt;30s</div>
+        <div class="metric-label">Landing → story complete</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val">&lt;1s</div>
+        <div class="metric-label">Time to first word (TTFT)</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val">0</div>
+        <div class="metric-label">PII stored in telemetry</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-val">10/min</div>
+        <div class="metric-label">Rate limit per IP</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ARCHITECTURE DIAGRAM ── -->
+  <div class="section">
+    <div class="section-label">System Architecture</div>
+    <div class="section-title">Component overview</div>
+    <div class="diagram-card">
+      <svg class="arch-svg" viewBox="0 0 860 400" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="rgba(255,209,102,0.6)"/>
+          </marker>
+          <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="rgba(147,197,253,0.7)"/>
+          </marker>
+          <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="rgba(110,231,183,0.6)"/>
+          </marker>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- ── Background regions ── -->
+        <rect x="10" y="10" width="840" height="380" rx="12" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+        <!-- Local machine label -->
+        <text x="30" y="38" font-family="DM Sans" font-size="9" fill="rgba(255,209,102,0.4)" letter-spacing="2" font-weight="500">LOCAL MACHINE</text>
+        <rect x="20" y="48" width="620" height="320" rx="8" fill="none" stroke="rgba(255,209,102,0.1)" stroke-width="1" stroke-dasharray="4 4"/>
+
+        <!-- External label -->
+        <text x="670" y="38" font-family="DM Sans" font-size="9" fill="rgba(147,197,253,0.4)" letter-spacing="2" font-weight="500">EXTERNAL API</text>
+        <rect x="660" y="48" width="180" height="180" rx="8" fill="none" stroke="rgba(147,197,253,0.1)" stroke-width="1" stroke-dasharray="4 4"/>
+
+        <!-- ── BROWSER BOX ── -->
+        <rect x="40" y="80" width="185" height="200" rx="10" fill="rgba(15,22,53,0.8)" stroke="rgba(255,209,102,0.35)" stroke-width="1.5"/>
+        <text x="132" y="106" text-anchor="middle" font-family="DM Sans" font-size="10" fill="rgba(255,209,102,0.6)" letter-spacing="1.5" font-weight="500">BROWSER</text>
+        <text x="132" y="128" text-anchor="middle" font-family="Cormorant Garamond" font-size="16" fill="#F5F0E8" font-style="italic">React Client</text>
+        <text x="132" y="146" text-anchor="middle" font-family="DM Mono" font-size="10" fill="rgba(234,217,192,0.4)">:5173</text>
+
+        <line x1="60" y1="162" x2="205" y2="162" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+
+        <text x="132" y="182" text-anchor="middle" font-family="DM Sans" font-size="10" fill="rgba(234,217,192,0.55)">StoryForm</text>
+        <text x="132" y="200" text-anchor="middle" font-family="DM Sans" font-size="10" fill="rgba(234,217,192,0.55)">StoryDisplay</text>
+        <text x="132" y="218" text-anchor="middle" font-family="DM Sans" font-size="10" fill="rgba(234,217,192,0.55)">useStoryStream</text>
+        <text x="132" y="236" text-anchor="middle" font-family="DM Sans" font-size="10" fill="rgba(234,217,192,0.55)">Starfield</text>
+        <text x="132" y="258" text-anchor="middle" font-family="DM Mono" font-size="9" fill="rgba(147,197,253,0.5)">fetch() + ReadableStream</text>
+
+        <!-- ── EXPRESS SERVER BOX ── -->
+        <rect x="300" y="60" width="210" height="260" rx="10" fill="rgba(15,22,53,0.8)" stroke="rgba(110,231,183,0.35)" stroke-width="1.5"/>
+        <text x="405" y="86" text-anchor="middle" font-family="DM Sans" font-size="10" fill="rgba(110,231,183,0.6)" letter-spacing="1.5" font-weight="500">EXPRESS SERVER</text>
+        <text x="405" y="108" text-anchor="middle" font-family="Cormorant Garamond" font-size="16" fill="#F5F0E8" font-style="italic">Node.js Backend</text>
+        <text x="405" y="126" text-anchor="middle" font-family="DM Mono" font-size="10" fill="rgba(234,217,192,0.4)">:3001</text>
+
+        <line x1="320" y1="142" x2="490" y2="142" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+
+        <text x="360" y="162" font-family="DM Sans" font-size="10" fill="rgba(234,217,192,0.45)">routes/</text>
+        <text x="375" y="178" font-family="DM Mono" font-size="9" fill="rgba(147,197,253,0.5)">POST /api/story</text>
+        <text x="375" y="194" font-family="DM Mono" font-size="9" fill="rgba(147,197,253,0.5)">GET  /api/metrics</text>
+
+        <text x="360" y="216" font-family="DM Sans" font-size="10" fill="rgba(234,217,192,0.45)">middleware/</text>
+        <text x="375" y="232" font-family="DM Mono" font-size="9" fill="rgba(196,181,253,0.5)">validate (Zod)</text>
+        <text x="375" y="248" font-family="DM Mono" font-size="9" fill="rgba(196,181,253,0.5)">rateLimit (10/min)</text>
+
+        <text x="360" y="270" font-family="DM Sans" font-size="10" fill="rgba(234,217,192,0.45)">services/</text>
+        <text x="375" y="286" font-family="DM Mono" font-size="9" fill="rgba(110,231,183,0.5)">claude.js</text>
+        <text x="375" y="302" font-family="DM Mono" font-size="9" fill="rgba(110,231,183,0.5)">telemetry.js</text>
+
+        <!-- ── CLAUDE API BOX ── -->
+        <rect x="675" y="70" width="155" height="140" rx="10" fill="rgba(15,22,53,0.8)" stroke="rgba(147,197,253,0.35)" stroke-width="1.5"/>
+        <text x="752" y="96" text-anchor="middle" font-family="DM Sans" font-size="10" fill="rgba(147,197,253,0.6)" letter-spacing="1.5" font-weight="500">CLAUDE API</text>
+        <text x="752" y="118" text-anchor="middle" font-family="Cormorant Garamond" font-size="15" fill="#F5F0E8" font-style="italic">Anthropic</text>
+        <line x1="695" y1="134" x2="810" y2="134" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+        <text x="752" y="154" text-anchor="middle" font-family="DM Mono" font-size="9" fill="rgba(147,197,253,0.5)">claude-sonnet-4-6</text>
+        <text x="752" y="170" text-anchor="middle" font-family="DM Mono" font-size="9" fill="rgba(147,197,253,0.5)">messages.stream()</text>
+        <text x="752" y="186" text-anchor="middle" font-family="DM Mono" font-size="9" fill="rgba(147,197,253,0.5)">HTTPS / TLS</text>
+
+        <!-- ── TELEMETRY BOX ── -->
+        <rect x="300" y="350" width="210" height="34" rx="8" fill="rgba(15,22,53,0.7)" stroke="rgba(255,209,102,0.2)" stroke-width="1"/>
+        <text x="405" y="371" text-anchor="middle" font-family="DM Mono" font-size="10" fill="rgba(255,209,102,0.45)">data/telemetry.jsonl</text>
+
+        <!-- ── ARROWS ── -->
+
+        <!-- Browser → Server: POST /api/story -->
+        <line x1="226" y1="148" x2="295" y2="148" stroke="rgba(255,209,102,0.5)" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="260" y="140" text-anchor="middle" font-family="DM Mono" font-size="8" fill="rgba(255,209,102,0.55)">POST</text>
+        <text x="260" y="150" text-anchor="middle" font-family="DM Mono" font-size="7" fill="rgba(255,209,102,0.35)">/api/story</text>
+
+        <!-- Server → Browser: SSE stream -->
+        <line x1="295" y1="168" x2="226" y2="168" stroke="rgba(110,231,183,0.5)" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+        <text x="260" y="186" text-anchor="middle" font-family="DM Mono" font-size="8" fill="rgba(110,231,183,0.6)">SSE stream</text>
+
+        <!-- Server → Claude API -->
+        <line x1="511" y1="130" x2="670" y2="130" stroke="rgba(147,197,253,0.5)" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+        <text x="590" y="122" text-anchor="middle" font-family="DM Mono" font-size="8" fill="rgba(147,197,253,0.55)">HTTPS + API key</text>
+
+        <!-- Claude API → Server -->
+        <line x1="670" y1="148" x2="511" y2="148" stroke="rgba(110,231,183,0.45)" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+        <text x="590" y="163" text-anchor="middle" font-family="DM Mono" font-size="8" fill="rgba(110,231,183,0.55)">text_delta chunks</text>
+
+        <!-- Server → Telemetry -->
+        <line x1="405" y1="322" x2="405" y2="346" stroke="rgba(255,209,102,0.3)" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <text x="432" y="340" font-family="DM Mono" font-size="8" fill="rgba(255,209,102,0.35)">append</text>
+
+        <!-- .env lock icon area -->
+        <rect x="520" y="240" width="130" height="54" rx="8" fill="rgba(252,165,165,0.07)" stroke="rgba(252,165,165,0.2)" stroke-width="1"/>
+        <text x="585" y="261" text-anchor="middle" font-family="DM Sans" font-size="9" fill="rgba(252,165,165,0.6)" font-weight="500">🔒 .env (gitignored)</text>
+        <text x="585" y="280" text-anchor="middle" font-family="DM Mono" font-size="8" fill="rgba(252,165,165,0.45)">ANTHROPIC_API_KEY</text>
+        <!-- Arrow from .env to server (dotted) -->
+        <line x1="520" y1="265" x2="511" y2="265" stroke="rgba(252,165,165,0.3)" stroke-width="1" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="divider">· · · ✦ · · ·</div>
+
+  <!-- ── DATA FLOW ── -->
+  <div class="section">
+    <div class="section-label">Data Flow</div>
+    <div class="section-title">What happens when you click "Generate"</div>
+    <div class="diagram-card">
+      <div class="flow-steps">
+
+        <div class="flow-step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">User submits the form</div>
+            <div class="step-desc">React collects name, age, characters, length. The submit handler calls <code>generate(formData)</code> in the <code>useStoryStream</code> hook, which fires a <code>fetch()</code> POST to <code>/api/story</code> with an <code>AbortController</code> attached.</div>
+            <span class="step-tag tag-blue">Client</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Server validates input</div>
+            <div class="step-desc">Zod schema checks all four fields — types, lengths, allowed values. HTML characters are stripped. If validation fails, a <code>400</code> is returned immediately and Claude is never called. Rate limiter checks 10 req/min per IP.</div>
+            <span class="step-tag tag-purple">Middleware</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">SSE headers open the stream</div>
+            <div class="step-desc">Server sets <code>Content-Type: text/event-stream</code>, <code>Cache-Control: no-cache</code>, calls <code>res.flushHeaders()</code>. This immediately opens the connection so the client can start reading — even before the first word arrives from Claude.</div>
+            <span class="step-tag tag-green">Performance</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Claude API called with streaming</div>
+            <div class="step-desc"><code>claude.messages.stream()</code> opens a persistent HTTPS connection to Anthropic. The system prompt sets age-appropriate tone and target length (80–250 words). The user prompt injects name and characters as labelled data — not as instructions — to prevent prompt injection.</div>
+            <span class="step-tag tag-blue">AI · Security</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Each token streamed to browser</div>
+            <div class="step-desc">Every <code>text_delta</code> event from Claude is immediately forwarded as <code>data: {"type":"chunk","text":"…"}\n\n</code>. The client's <code>ReadableStream</code> reader receives it within milliseconds. First word typically appears in ~800ms — well under the 30s target.</div>
+            <span class="step-tag tag-green">Streaming · Performance</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <div class="step-title">React renders each chunk</div>
+            <div class="step-desc"><code>setStoryText(prev => prev + chunk)</code> appends each token to state. React re-renders only the changed text node. The blinking cursor signals the story is still arriving. Paragraphs are split on <code>\n\n</code> for display.</div>
+            <span class="step-tag tag-blue">Client · UX</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-num">7</div>
+          <div class="step-body">
+            <div class="step-title">Telemetry written on completion</div>
+            <div class="step-desc">Once the stream closes, the server appends one JSON line to <code>data/telemetry.jsonl</code>: request ID, child age, story length, <code>time_to_first_token_ms</code>, <code>total_generation_ms</code>, token counts, and status. No name, no characters text, no story content — zero PII.</div>
+            <span class="step-tag tag-gold">Observability · Privacy</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="divider">· · · ✦ · · ·</div>
+
+  <!-- ── TRADEOFFS ── -->
+  <div class="section">
+    <div class="section-label">Design Decisions</div>
+    <div class="section-title">Key tradeoffs</div>
+    <div class="tradeoffs-grid">
+
+      <div class="tradeoff-card">
+        <h3>SSE streaming vs. wait-and-respond</h3>
+        <div class="tradeoff-row"><span class="icon">✦</span><p><strong>Streaming:</strong> First word in ~800ms, feels alive, tolerates slow networks gracefully, lower perceived latency even if total time is the same.</p></div>
+        <div class="tradeoff-row"><span class="icon">○</span><p><strong>Wait-and-respond:</strong> Simpler code, easier error handling, but 8–15s of blank screen — fatal for a product where first impressions matter.</p></div>
+        <div class="chosen">✓ Chosen: SSE streaming</div>
+      </div>
+
+      <div class="tradeoff-card">
+        <h3>Express server vs. frontend-only</h3>
+        <div class="tradeoff-row"><span class="icon">✦</span><p><strong>Backend proxy:</strong> API key never reaches the browser. CORS locked to localhost. Rate limiting and validation happen server-side where they can't be bypassed.</p></div>
+        <div class="tradeoff-row"><span class="icon">○</span><p><strong>Frontend-only:</strong> Simpler setup, but API key in client code — visible in DevTools, leakable if ever deployed or shared.</p></div>
+        <div class="chosen">✓ Chosen: Express server (security requirement)</div>
+      </div>
+
+      <div class="tradeoff-card">
+        <h3>JSON file vs. SQLite for telemetry</h3>
+        <div class="tradeoff-row"><span class="icon">✦</span><p><strong>JSONL append-log:</strong> Zero native dependencies, no compilation, works reliably across WSL + Windows. Queryable with Node.js built-ins.</p></div>
+        <div class="tradeoff-row"><span class="icon">○</span><p><strong>SQLite:</strong> Proper indexing, better for large-scale queries. But <code>better-sqlite3</code> requires native compilation — fragile in WSL environments.</p></div>
+        <div class="chosen">✓ Chosen: JSONL (upgrade path to SQLite is clean)</div>
+      </div>
+
+      <div class="tradeoff-card">
+        <h3>fetch() + ReadableStream vs. EventSource</h3>
+        <div class="tradeoff-row"><span class="icon">✦</span><p><strong>fetch + ReadableStream:</strong> Supports POST with JSON body, full control over headers, can attach AbortController to cancel mid-stream.</p></div>
+        <div class="tradeoff-row"><span class="icon">○</span><p><strong>EventSource API:</strong> Built for SSE but only supports GET requests — would require a separate session-ID handshake to pass form data.</p></div>
+        <div class="chosen">✓ Chosen: fetch + ReadableStream</div>
+      </div>
+
+      <div class="tradeoff-card">
+        <h3>Stateless sessions vs. user accounts</h3>
+        <div class="tradeoff-row"><span class="icon">✦</span><p><strong>Stateless:</strong> No auth, no database, no GDPR surface. Simpler code, faster to build, no session management bugs.</p></div>
+        <div class="tradeoff-row"><span class="icon">○</span><p><strong>User accounts:</strong> Story history, personalization over time — but adds significant complexity and a data responsibility.</p></div>
+        <div class="chosen">✓ Chosen: Stateless (explicit MVP scope)</div>
+      </div>
+
+      <div class="tradeoff-card">
+        <h3>Mock mode vs. always-live API</h3>
+        <div class="tradeoff-row"><span class="icon">✦</span><p><strong>Mock mode:</strong> Full UI testing without an API key or cost. Realistic word-by-word delay simulates streaming. Toggled by one env var.</p></div>
+        <div class="tradeoff-row"><span class="icon">○</span><p><strong>Always-live:</strong> Tests the real integration path but adds cost per test run and blocks development without a key.</p></div>
+        <div class="chosen">✓ Chosen: Mock mode default (MOCK_MODE=true)</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="divider">· · · ✦ · · ·</div>
+
+  <!-- ── TECHNICAL INSIGHTS ── -->
+  <div class="section">
+    <div class="section-label">Technical Insights</div>
+    <div class="section-title">Patterns worth noting</div>
+    <div class="insights-list">
+
+      <div class="insight">
+        <h3>Prompt injection is mitigated by data labelling, not filtering</h3>
+        <p>User input (name, characters) is injected into the prompt as explicitly labelled data: <code>"The child's name is {name}. Include: {characters}."</code> — not concatenated into instructions. This means even if a user types "ignore previous instructions", it reads as a character name to Claude, not a directive. The system prompt is instruction-only; user content is confined to the user turn.</p>
+      </div>
+
+      <div class="insight">
+        <h3>AbortController prevents ghost streams</h3>
+        <p>If a parent submits the form a second time before the first story finishes, <code>abortRef.current.abort()</code> cancels the in-flight fetch. Without this, you'd have two SSE readers racing to write to the same React state — producing garbled, interleaved story text. The abort signal also propagates server-side, closing the Claude stream early and saving tokens.</p>
+      </div>
+
+      <div class="insight">
+        <h3>res.flushHeaders() is critical for streaming to work</h3>
+        <p>Without calling <code>res.flushHeaders()</code> before the async Claude call begins, Express buffers the response until the first <code>res.write()</code>. With it, the browser receives the <code>text/event-stream</code> headers immediately — establishing the SSE connection — so the very first token can be delivered with zero extra round-trips.</p>
+      </div>
+
+      <div class="insight">
+        <h3>Telemetry is deliberately non-blocking and non-critical</h3>
+        <p>The <code>logRequest()</code> call is wrapped in a try/catch that silently swallows errors. If the disk is full, the data directory is missing, or the JSON serialization fails — the story still delivers. Telemetry is observability infrastructure, not product logic. Failing silently here is the correct design; a crash would be a bug.</p>
+      </div>
+
+      <div class="insight">
+        <h3>token max_tokens caps double as UX and cost controls</h3>
+        <p>Setting <code>max_tokens: 350 / 600 / 900</code> for short/medium/long serves two purposes: (1) it bounds story length so the reading time matches the label, and (2) it caps the per-request cost to ~$0.002–$0.005. Without this, a pathological prompt could generate thousands of tokens — running up cost and making the "long" option 10× longer than expected.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="divider">· · · ✦ · · ·</div>
+
+  <!-- ── RISK REGISTER ── -->
+  <div class="section">
+    <div class="section-label">Risk Management</div>
+    <div class="section-title">Risk register</div>
+    <div class="risk-wrap">
+      <table class="risk-table">
+        <thead>
+          <tr>
+            <th style="width:24%">Risk</th>
+            <th style="width:10%">Likelihood</th>
+            <th style="width:10%">Impact</th>
+            <th>Mitigation</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <tr>
+            <td><div class="risk-name">API key exposed in browser</div></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>Key lives in <code>.env</code> server-side only. <code>.gitignore</code> excludes it. CORS blocks cross-origin requests. Browser never receives the key — by design.</td>
+          </tr>
+
+          <tr>
+            <td><div class="risk-name">Prompt injection via user input</div></td>
+            <td><span class="badge badge-med">Med</span></td>
+            <td><span class="badge badge-med">Med</span></td>
+            <td>User input is labelled data in the user turn, not part of the system prompt. HTML characters stripped server-side. Max length 200 chars limits injection surface. Claude's instruction-following makes data-context injection low-risk.</td>
+          </tr>
+
+          <tr>
+            <td><div class="risk-name">Runaway API cost</div></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-med">Med</span></td>
+            <td>Hard <code>max_tokens</code> cap per story. Rate limiter: 10 req/min per IP. Mock mode on by default — no cost during development. Set a spend cap in Anthropic console as additional backstop.</td>
+          </tr>
+
+          <tr>
+            <td><div class="risk-name">Claude API downtime / timeout</div></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-med">Med</span></td>
+            <td>Server catches API errors and emits a safe <code>{"type":"error"}</code> SSE event. Client shows a friendly error state with a retry button. Mock mode available as instant fallback for demos.</td>
+          </tr>
+
+          <tr>
+            <td><div class="risk-name">Inappropriate story content</div></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>System prompt explicitly constrains tone: "soothing", "calming", "ends with child falling asleep". Claude's built-in safety filters apply. Character input is max 200 chars and clearly labelled as creative input, not instructions.</td>
+          </tr>
+
+          <tr>
+            <td><div class="risk-name">PII stored in telemetry</div></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-med">Med</span></td>
+            <td>Telemetry schema stores only: age (integer), story length (enum), timing, token counts, status. Child name, character names, and story text are deliberately excluded. No user identity. File is gitignored.</td>
+          </tr>
+
+          <tr>
+            <td><div class="risk-name">WSL/Windows filesystem git conflicts</div></td>
+            <td><span class="badge badge-high">High</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>Known WSL issue: git cannot chmod files on <code>/mnt/c/</code>. Mitigated by running all git operations from the Linux home directory (<code>~/</code>), syncing files with <code>rsync</code> before committing. No impact on running the app.</td>
+          </tr>
+
+          <tr>
+            <td><div class="risk-name">Stale telemetry file (unbounded growth)</div></td>
+            <td><span class="badge badge-med">Med</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>Each record is ~200 bytes. At 100 stories/day, the file grows ~7MB/year — trivial locally. Metrics query filters to last 7 days. Manual rotation (rename file) is the upgrade path if needed.</td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// Starfield animation
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+let stars = [], animId;
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  stars = Array.from({ length: 160 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 1.1 + 0.2,
+    phase: Math.random() * Math.PI * 2,
+    speed: Math.random() * 0.006 + 0.002,
+  }));
+}
+
+function draw(t) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (const s of stars) {
+    const a = 0.2 + 0.5 * (0.5 + 0.5 * Math.sin(s.phase + t * s.speed));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255,240,200,${a})`;
+    ctx.fill();
+  }
+  animId = requestAnimationFrame(draw);
+}
+
+resize();
+window.addEventListener('resize', resize);
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
