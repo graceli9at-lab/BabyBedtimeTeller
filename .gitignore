@@ -1,0 +1,5 @@
+node_modules/
+.env
+data/telemetry.jsonl
+dist/
+.DS_Store

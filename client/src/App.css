@@ -1,0 +1,423 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --navy:       #080D20;
+  --navy-mid:   #0F1635;
+  --navy-card:  rgba(15, 22, 53, 0.72);
+  --gold:       #FFD166;
+  --gold-dim:   rgba(255, 209, 102, 0.35);
+  --cream:      #EAD9C0;
+  --cream-dim:  rgba(234, 217, 192, 0.55);
+  --white:      #F5F0E8;
+  --border:     rgba(255, 209, 102, 0.18);
+  --radius:     14px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--navy);
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Starfield ─────────────────────────────── */
+.starfield {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── Layout ─────────────────────────────────── */
+.app-content {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 3rem 1.25rem 4rem;
+}
+
+/* ── Header ──────────────────────────────────── */
+.site-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.site-header .eyebrow {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.75;
+  margin-bottom: 0.9rem;
+}
+
+.site-header h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+  font-weight: 300;
+  line-height: 1.1;
+  color: var(--white);
+  letter-spacing: 0.02em;
+}
+
+.site-header h1 em {
+  font-style: italic;
+  color: var(--gold);
+}
+
+.site-header .tagline {
+  margin-top: 0.7rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--cream-dim);
+  letter-spacing: 0.04em;
+}
+
+/* ── Hero name display ─────────────────────── */
+.hero-name {
+  text-align: center;
+  margin-bottom: 1.8rem;
+  min-height: 2rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.45rem;
+  font-style: italic;
+  color: var(--gold);
+  text-shadow: 0 0 28px rgba(255, 209, 102, 0.45);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.hero-name.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Card ─────────────────────────────────────── */
+.card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2.25rem 2rem;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Form fields ─────────────────────────────── */
+.field {
+  margin-bottom: 1.6rem;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.67rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.8;
+  margin-bottom: 0.55rem;
+}
+
+.field-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 0.72rem 0.95rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  color: var(--white);
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.field-input:focus {
+  border-color: rgba(255, 209, 102, 0.5);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.field-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Age stepper ─────────────────────────────── */
+.age-stepper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stepper-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 209, 102, 0.1);
+  border: 1px solid rgba(255, 209, 102, 0.3);
+  color: var(--gold);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s;
+  user-select: none;
+}
+
+.stepper-btn:hover {
+  background: rgba(255, 209, 102, 0.22);
+}
+
+.age-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.1rem;
+  font-weight: 300;
+  color: var(--white);
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+/* ── Length tabs ─────────────────────────────── */
+.length-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.length-tab {
+  flex: 1;
+  padding: 0.58rem 0.5rem;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.38);
+  transition: all 0.18s;
+  user-select: none;
+}
+
+.length-tab:hover:not(.active) {
+  border-color: rgba(255, 209, 102, 0.3);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.length-tab.active {
+  background: rgba(255, 209, 102, 0.14);
+  border-color: rgba(255, 209, 102, 0.6);
+  color: var(--gold);
+}
+
+/* ── Generate button ─────────────────────────── */
+.generate-btn {
+  width: 100%;
+  margin-top: 1.8rem;
+  padding: 0.95rem;
+  background: linear-gradient(135deg, #FFD166, #C9961E);
+  border: none;
+  border-radius: 10px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--navy);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  box-shadow: 0 4px 22px rgba(255, 209, 102, 0.22);
+}
+
+.generate-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(255, 209, 102, 0.38);
+}
+
+.generate-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.generate-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Story view ──────────────────────────────── */
+.story-view {
+  width: 100%;
+  max-width: 620px;
+}
+
+.story-status {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.story-status .status-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.7;
+  margin-bottom: 0.5rem;
+}
+
+.story-status .status-dots {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+
+.status-dot:nth-child(2) { animation-delay: 0.2s; }
+.status-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  50%       { opacity: 1;    transform: scale(1.2); }
+}
+
+.story-card {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2.5rem 2.25rem;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+.story-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem;
+  font-style: italic;
+  color: var(--gold);
+  text-align: center;
+  margin-bottom: 1.8rem;
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.story-body p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.13rem;
+  font-weight: 300;
+  line-height: 2;
+  color: var(--cream);
+  margin-bottom: 1.1rem;
+  letter-spacing: 0.01em;
+}
+
+.story-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: var(--gold);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 0.9s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ── Back button ─────────────────────────────── */
+.back-btn {
+  display: block;
+  margin: 1.8rem auto 0;
+  padding: 0.65rem 1.8rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cream-dim);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.back-btn:hover {
+  border-color: rgba(255, 209, 102, 0.4);
+  color: var(--gold);
+}
+
+/* ── Error state ─────────────────────────────── */
+.error-box {
+  text-align: center;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 100, 100, 0.3);
+  border-radius: var(--radius);
+  color: rgba(255, 180, 180, 0.9);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1.05rem;
+  margin-bottom: 1rem;
+}
+
+/* ── Divider ─────────────────────────────────── */
+.divider {
+  text-align: center;
+  color: var(--gold-dim);
+  font-size: 0.8rem;
+  letter-spacing: 0.4em;
+  margin: 2rem 0;
+}
+
+/* ── Fade-in animation ───────────────────────── */
+.fade-in {
+  animation: fadeIn 0.6s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Mock mode badge ─────────────────────────── */
+.mock-badge {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 10;
+  padding: 0.3rem 0.7rem;
+  background: rgba(255, 209, 102, 0.12);
+  border: 1px solid rgba(255, 209, 102, 0.3);
+  border-radius: 20px;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 209, 102, 0.6);
+}
